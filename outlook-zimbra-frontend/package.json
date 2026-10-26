@@ -1,0 +1,48 @@
+{
+  "name": "outlook-zimbra-frontend",
+  "version": "0.0.1",
+  "author": "Ionic Framework",
+  "homepage": "https://ionicframework.com/",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "lint": "ng lint"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/common": "20.3.34",
+    "@angular/compiler": "20.3.34",
+    "@angular/core": "20.3.34",
+    "@angular/forms": "20.3.34",
+    "@angular/platform-browser": "20.3.34",
+    "@angular/router": "20.3.34",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/haptics": "^7.0.0",
+    "@capacitor/keyboard": "^7.0.0",
+    "@capacitor/status-bar": "^7.0.0",
+    "@ionic/angular": "^8.8.19",
+    "ionicons": "^8.1.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.1"
+  },
+  "devDependencies": {
+    "@angular/build": "20.3.41",
+    "@angular/cli": "20.3.41",
+    "@angular/compiler-cli": "20.3.34",
+    "@angular/language-service": "20.3.34",
+    "@capacitor/cli": "^7.0.0",
+    "@ionic/angular-toolkit": "^12.3.0",
+    "angular-eslint": "^20.7.0",
+    "eslint": "^9.0.0",
+    "jsdom": "^26.1.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.45.0",
+    "vitest": "^3.2.4"
+  },
+  "description": "Outlook and Zimbra operations workspace"
+}

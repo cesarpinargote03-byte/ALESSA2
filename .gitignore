@@ -1,0 +1,79 @@
+# ==========================================================================
+# SEGURIDAD Y CREDENCIALES (NUNCA SUBIR A GIT)
+# ==========================================================================
+.env
+.env.*
+!.env.example
+**/backend/.env
+**/backend/.env.*
+!**/backend/.env.example
+
+# Cachés de tokens, sesiones y llaves criptográficas
+*.bin
+*.key
+*.pem
+*.pfx
+*.p12
+*.crt
+*.secret
+msal_cache*
+backend/data/
+data/
+secrets/
+credentials*.json
+client_secret*.json
+
+# ==========================================================================
+# ENTORNOS VIRTUALES DE PYTHON Y CACHÉ
+# ==========================================================================
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# ==========================================================================
+# NODE / ANGULAR / IONIC
+# ==========================================================================
+node_modules/
+**/node_modules/
+.angular/
+**/.angular/
+.ionic/
+**/.ionic/
+www/
+**/www/
+platforms/
+plugins/
+out-tsc/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==========================================================================
+# ARCHIVOS TEMPORALES Y SISTEMA OPERATIVO
+# ==========================================================================
+*.log
+*.tmp
+.tmp/
+.DS_Store
+Thumbs.db
+$RECYCLE.BIN/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+

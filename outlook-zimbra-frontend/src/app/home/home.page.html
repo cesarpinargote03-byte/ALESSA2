@@ -1,0 +1,702 @@
+<div class="workspace">
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Umbral, inicio">
+      <span class="brand-mark"><span></span><span></span><span></span></span>
+      <span class="brand-copy">
+        <strong>umbral</strong>
+        <small>GESTIÓN INTERNA</small>
+      </span>
+    </a>
+
+    <div class="workspace-picker">
+      <span class="workspace-avatar">DG</span>
+      <span class="workspace-label"><strong>Dirección general</strong><small>Espacio de trabajo</small></span>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
+    </div>
+
+    <nav class="primary-nav" aria-label="Navegación principal">
+      <p class="nav-caption">ESPACIO DE TRABAJO</p>
+      <button type="button" class="nav-link" [class.active]="activeView === 'overview'" [class.sidebar-item-active]="activeView === 'overview'" (click)="setView('overview')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /></svg>
+        <span>Resumen</span>
+      </button>
+      <button type="button" class="nav-link" [class.active]="activeView === 'inbox'" [class.sidebar-item-active]="activeView === 'inbox'" (click)="setView('inbox')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v13H4z" /><path d="M4 13h4l1.5 2h5L16 13h4" /></svg>
+        <span>Bandeja</span>
+        <span class="nav-count">{{ messages.length }}</span>
+      </button>
+      <button type="button" class="nav-link" [class.active]="activeView === 'planning'" [class.sidebar-item-active]="activeView === 'planning'" (click)="setView('planning')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17" /><path d="m8 14 2 2 5-5" /></svg>
+        <span>Planificación</span>
+        <span class="nav-count" *ngIf="plannedMessages.length">{{ plannedMessages.length }}</span>
+      </button>
+      <button type="button" class="nav-link" [class.active]="activeView === 'batches'" [class.sidebar-item-active]="activeView === 'batches'" (click)="setView('batches')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h16v12H4zM4 8l8 6 8-6M8 4.5h8" /></svg>
+        <span>Reenvíos</span>
+      </button>
+
+      <p class="nav-caption nav-caption-spaced">PREFERENCIAS</p>
+      <button type="button" class="nav-link" [class.active]="activeView === 'settings'" [class.sidebar-item-active]="activeView === 'settings'" (click)="setView('settings')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="m19.4 15 .1.1 1.2 1-1.2 2.1-1.5-.5a7.8 7.8 0 0 1-1.6.9l-.3 1.6h-2.4l-.3-1.6a7.8 7.8 0 0 1-1.6-.9l-1.5.5-1.2-2.1 1.2-1a7.2 7.2 0 0 1 0-1.9l-1.2-1 1.2-2.1 1.5.5a7.8 7.8 0 0 1 1.6-.9l.3-1.6h2.4l.3 1.6a7.8 7.8 0 0 1 1.6.9l1.5-.5 1.2 2.1-1.2 1a7.2 7.2 0 0 1 0 1.8Z" transform="translate(-1 -1)" /></svg>
+        <span>Configuración</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="integration-card">
+        <div class="integration-heading">
+          <span class="integration-status" [class.connected]="authenticated"></span>
+          <span>{{ authenticated ? 'Outlook conectado' : 'Cuenta sin conectar' }}</span>
+        </div>
+        <p>{{ authenticated ? (connectedEmail || 'La bandeja está lista para sincronizar.') : 'Conecta Outlook para ver tus solicitudes.' }}</p>
+        <button type="button" class="text-action" (click)="startLogin()">
+          {{ authenticated ? 'Resincronizar cuenta' : 'Conectar cuenta' }}
+          <span aria-hidden="true">↗</span>
+        </button>
+      </div>
+      <div class="profile-row">
+        <span class="profile-avatar">CR</span>
+        <span class="profile-copy"><strong>{{ connectedEmail ? connectedEmail.split('@')[0] : 'César R.' }}</strong><small>{{ connectedEmail || 'Administrador' }}</small></span>
+        <button type="button" class="more-button" aria-label="Más opciones">···</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div class="breadcrumbs">
+        <span>Operaciones</span>
+        <span class="crumb-separator">/</span>
+        <strong>{{ activeView === 'inbox' ? 'Bandeja' : activeView === 'overview' ? 'Resumen' : activeView === 'planning' ? 'Planificación' : activeView === 'batches' ? 'Reenvíos' : 'Configuración' }}</strong>
+      </div>
+      <div class="topbar-actions">
+        <div class="date-stamp">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="13" rx="2" /><path d="M6.5 2.5v3M13.5 2.5v3M3 8h14" /></svg>
+          <span>Domingo, 25 de octubre</span>
+        </div>
+        <span class="topbar-divider"></span>
+        <button type="button" class="icon-button notification-button" [attr.aria-label]="darkMode ? 'Modo claro' : 'Modo noche'" [title]="darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo noche'" (click)="toggleDarkMode()">
+          {{ darkMode ? '☀' : '☾' }}
+        </button>
+        <button type="button" class="icon-button notification-button" aria-label="Notificaciones">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
+          <span *ngIf="usingDemoData"></span>
+        </button>
+        <span class="top-avatar">CR</span>
+      </div>
+    </header>
+
+    <div class="content-shell">
+      <div class="notice demo-notice" *ngIf="usingDemoData">
+        <span class="notice-marker"></span>
+        <span>Estás explorando una <strong>vista de muestra</strong>. Conecta Microsoft para cargar datos reales.</span>
+        <button type="button" (click)="startLogin()">Conectar <span aria-hidden="true">↗</span></button>
+      </div>
+      <div class="notice error-notice" *ngIf="errorMessage">
+        <span class="notice-marker"></span>
+        <span>{{ errorMessage }}</span>
+        <button type="button" aria-label="Cerrar aviso" (click)="clearNotices()">×</button>
+      </div>
+      <div class="notice success-notice" *ngIf="successMessage">
+        <span class="notice-marker"></span>
+        <span>{{ successMessage }}</span>
+        <button type="button" aria-label="Cerrar aviso" (click)="clearNotices()">×</button>
+      </div>
+
+      <section class="view" *ngIf="activeView === 'inbox'">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">CENTRO DE SOLICITUDES <span class="eyebrow-line"></span> {{ messages.length }} CARGADOS</p>
+            <h1>La bandeja, <em>en orden.</em></h1>
+            <p class="page-subtitle">Todo lo que requiere tu atención, en un solo lugar.</p>
+          </div>
+          <button type="button" class="button button-primary sync-button btn-sync" [disabled]="syncing" (click)="syncInbox()">
+            <svg viewBox="0 0 20 20" aria-hidden="true" [class.spinning]="syncing"><path d="M16.5 8A6.5 6.5 0 0 0 5 5.5L3.5 7M3.5 4v3h3M3.5 12a6.5 6.5 0 0 0 11.5 2.5l1.5-1.5M16.5 16v-3h-3" /></svg>
+            {{ syncing ? 'Sincronizando…' : 'Sincronizar bandeja' }}
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card stat-highlight umbral-card">
+            <div class="stat-top"><span>Mensajes cargados</span><span class="stat-icon icon-box">↘</span></div>
+            <div class="stat-value">{{ messages.length }}<span class="stat-trend" *ngIf="usingDemoData">+12%</span></div>
+            <div class="stat-foot"><span class="tiny-bars" *ngIf="usingDemoData"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span>{{ usingDemoData ? 'vs. mes anterior · muestra' : 'En la sincronización actual' }}</span></div>
+          </article>
+          <article class="stat-card umbral-card">
+            <div class="stat-top"><span>Caídas / Alertas</span><span class="stat-icon icon-box"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v6l3.5 2" /><circle cx="10" cy="10" r="7" /></svg></span></div>
+            <div class="stat-value">{{ usingDemoData ? unreadCount : failureCount }}<span class="stat-context">requieren atención</span></div>
+            <div class="stat-foot"><span class="stat-foot-dot"></span><span>{{ usingDemoData ? 'En tu bandeja · muestra' : 'Detectados por triaje semántico' }}</span></div>
+          </article>
+          <article class="stat-card umbral-card">
+            <div class="stat-top"><span>Planificados</span><span class="stat-icon icon-box"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 13 4-4 3 2 5-6M12 5h4v4" /></svg></span></div>
+            <div class="stat-value">{{ plannedMessages.length }} <span class="stat-unit">solicitudes</span></div>
+            <div class="stat-foot"><span class="good-trend">{{ successCount }} OK</span><span>Servicios restablecidos en bandeja</span></div>
+          </article>
+        </div>
+
+        <section class="inbox-panel umbral-card">
+          <div class="panel-heading">
+            <div class="panel-title-group">
+              <h2>Solicitudes recientes</h2>
+              <p>Revisa, clasifica y planifica lo que sigue.</p>
+            </div>
+            <button type="button" class="quiet-button" (click)="resetFilters()">Restablecer filtros <span aria-hidden="true">↺</span></button>
+          </div>
+
+          <div class="filters-row">
+            <label class="search-box">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.8" cy="8.8" r="5.8" /><path d="m13 13 4 4" /></svg>
+              <input #searchInput type="search" [(ngModel)]="searchText" (ngModelChange)="currentPage = 1" placeholder="Buscar asunto o remitente" aria-label="Buscar asunto o remitente" />
+              <kbd>Ctrl K</kbd>
+            </label>
+            <label class="select-wrap">
+              <span class="sr-only">Filtrar por categoría</span>
+              <select [(ngModel)]="selectedCategory" (ngModelChange)="currentPage = 1">
+                <option value="">Todas las categorías</option>
+                <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+              </select>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
+            </label>
+            <label class="select-wrap year-select">
+              <span class="sr-only">Filtrar por año</span>
+              <select [(ngModel)]="selectedYear" (ngModelChange)="currentPage = 1">
+                <option value="">Todos los años</option>
+                <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+              </select>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
+            </label>
+            <label class="select-wrap folder-select">
+              <span class="sr-only">Filtrar por carpeta</span>
+              <select [(ngModel)]="selectedFolder" (ngModelChange)="currentPage = 1">
+                <option value="">Todas las carpetas</option>
+                <option *ngFor="let folder of folders" [value]="folder">{{ folder }}</option>
+              </select>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
+            </label>
+          </div>
+
+          <div class="table-wrap">
+            <table class="mail-table">
+              <thead>
+                <tr>
+                  <th class="col-head-sender sender-heading">REMITENTE</th>
+                  <th class="col-head-subject">ASUNTO</th>
+                  <th class="col-head-category">CATEGORÍA</th>
+                  <th class="col-head-folder">CARPETA</th>
+                  <th class="col-head-date date-heading">RECIBIDO</th>
+                  <th class="col-head-actions"><span class="sr-only">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  class="mail-row"
+                  *ngFor="let message of pageMessages; let index = index"
+                  [class.email-row-failure]="getMessageSemanticStatus(message) === 'failure'"
+                  [class.email-row-success]="getMessageSemanticStatus(message) === 'success'"
+                  (click)="selectedMessage = message"
+                >
+                  <td class="col-cell-sender">
+                    <div class="sender-cell">
+                      <span
+                        class="sender-avatar"
+                        [class.status-avatar-failure]="getMessageSemanticStatus(message) === 'failure'"
+                        [class.status-avatar-success]="getMessageSemanticStatus(message) === 'success'"
+                        [class.status-avatar-neutral]="getMessageSemanticStatus(message) === 'neutral'"
+                      >
+                        {{
+                          getMessageSemanticStatus(message) === 'failure'
+                            ? '!'
+                            : getMessageSemanticStatus(message) === 'success'
+                              ? '✓'
+                              : message.remitente_email.slice(0, 1).toUpperCase()
+                        }}
+                      </span>
+                      <div class="sender-box">
+                        <span class="sender-name">{{ message.remitente_email.split('@')[0].replace('.', ' ') }}</span>
+                        <span class="sender-email">{{ message.remitente_email }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="col-cell-subject">
+                    <div class="subject-box">
+                      <span class="unread-dot" *ngIf="usingDemoData && index < 2"></span>
+                      <span class="subject-title">{{ message.subject }}</span>
+                      <span class="subject-subtitle">
+                        <span class="planned-week-badge" *ngIf="message.semana_planificada_inicio">📅 {{ formatPlanBadge(message) }}</span>
+                        <span *ngIf="!message.semana_planificada_inicio">{{ message.id.startsWith('demo-') ? 'Solicitud de gestión' : 'Mensaje de Outlook' }}</span>
+                      </span>
+                    </div>
+                  </td>
+                  <td class="col-cell-category">
+                    <span class="category-tag" [class.category-olive]="message.categoria === 'Presupuesto' || message.categoria === 'Finanzas'" [class.category-terra]="message.categoria === 'Convenios' || message.categoria === 'Proyectos'">{{ message.categoria || 'Sin categoría' }}</span>
+                  </td>
+                  <td class="col-cell-folder">
+                    <div class="folder-label">
+                      <svg class="folder-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 5.5h6l1.5 2h7.5v8H2.5z" /></svg>
+                      <span class="folder-name">{{ message.carpeta_origen }}</span>
+                    </div>
+                  </td>
+                  <td class="col-cell-date date-cell">
+                    <time class="received-date">{{ message.received_at | date:'d MMM, HH:mm':'':'es' }}</time>
+                  </td>
+                  <td class="col-cell-actions row-actions">
+                    <button type="button" class="btn-plan-row row-action" aria-label="Planificar solicitud" title="Planificar" (click)="openPlanner(message, $event)">
+                      <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4.5" width="14" height="13" rx="2" /><path d="M6.5 2.5v4M13.5 2.5v4M3 8.5h14M7 12h2M11 12h2" /></svg>
+                    </button>
+                    <button type="button" class="btn-detail-row row-more" aria-label="Ver detalles" title="Ver detalles" (click)="selectedMessage = message; $event.stopPropagation()">···</button>
+                  </td>
+                </tr>
+                <tr *ngIf="!pageMessages.length && !loading">
+                  <td colspan="6" class="empty-cell">
+                    <span class="empty-symbol">⌕</span>
+                    <strong>No se encontraron requerimientos para este filtro</strong>
+                    <span>Prueba cambiando la búsqueda o restablece los filtros.</span>
+                    <button type="button" class="text-action" (click)="resetFilters()">Limpiar filtros</button>
+                  </td>
+                </tr>
+                <tr *ngIf="loading">
+                  <td colspan="6" class="loading-cell"><span class="loading-spinner"></span>Cargando mensajes de Outlook…</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <footer class="table-footer">
+            <span>Mostrando <strong>{{ startItem }}–{{ endItem }}</strong> de <strong>{{ filteredMessages.length }}</strong> solicitudes</span>
+            <div class="pagination">
+              <button type="button" aria-label="Página anterior" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">←</button>
+              <span>Página <strong>{{ currentPage }}</strong> de <strong>{{ totalPages }}</strong></span>
+              <button type="button" aria-label="Página siguiente" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">→</button>
+            </div>
+          </footer>
+        </section>
+        <p class="page-footnote"><span class="footnote-mark">i</span> Los mensajes originales permanecen en Outlook. Umbral organiza sus metadatos para facilitar el seguimiento.</p>
+      </section>
+
+      <section class="view" *ngIf="activeView === 'overview'">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">VIERNES, 24 OCTUBRE 2026 <span class="eyebrow-line"></span> RESUMEN DIARIO</p>
+            <h1>Buen día, César.</h1>
+            <p class="page-subtitle">Aquí tienes el pulso de tus solicitudes esta semana.</p>
+          </div>
+          <button type="button" class="button button-primary" (click)="setView('inbox')">Ir a la bandeja <span aria-hidden="true">→</span></button>
+        </div>
+        <div class="overview-grid" *ngIf="usingDemoData; else overviewUnavailable">
+          <article class="overview-card overview-wide">
+            <div class="overview-card-heading"><div><p class="eyebrow">VOLUMEN DE SOLICITUDES</p><h2>Una semana en perspectiva</h2></div><span class="period-chip">Últimos 7 días <span aria-hidden="true">⌄</span></span></div>
+            <div class="chart-area">
+              <div class="chart-labels"><span>20</span><span>15</span><span>10</span><span>5</span><span>0</span></div>
+              <div class="chart-bars">
+                <div class="chart-bar-item"><span class="chart-value">8</span><i style="--bar: 40%"></i><small>LUN</small></div>
+                <div class="chart-bar-item"><span class="chart-value">12</span><i style="--bar: 60%"></i><small>MAR</small></div>
+                <div class="chart-bar-item"><span class="chart-value">6</span><i style="--bar: 30%"></i><small>MIÉ</small></div>
+                <div class="chart-bar-item"><span class="chart-value">15</span><i style="--bar: 75%"></i><small>JUE</small></div>
+                <div class="chart-bar-item today-bar"><span class="chart-value">9</span><i style="--bar: 45%"></i><small>VIE</small></div>
+                <div class="chart-bar-item"><span class="chart-value">0</span><i style="--bar: 4%"></i><small>SÁB</small></div>
+                <div class="chart-bar-item"><span class="chart-value">0</span><i style="--bar: 4%"></i><small>DOM</small></div>
+              </div>
+            </div>
+            <div class="chart-legend"><span><i class="legend-square"></i>Solicitudes recibidas</span><span class="chart-total"><strong>50</strong> esta semana</span></div>
+          </article>
+          <article class="overview-card attention-card">
+            <p class="eyebrow">PARA HOY</p>
+            <h2>Un paso a la vez.</h2>
+            <p class="attention-copy">Tienes <strong>{{ unreadCount }} solicitudes</strong> que podrían necesitar una primera revisión.</p>
+            <div class="attention-stack"><span *ngFor="let message of messages.slice(0, 3); let index = index" [class]="'stack-avatar avatar-' + index">{{ message.remitente_email.slice(0, 1).toUpperCase() }}</span><span class="stack-more">+{{ messages.length > 3 ? messages.length - 3 : 0 }}</span></div>
+            <button type="button" class="text-action" (click)="setView('inbox')">Revisar bandeja <span aria-hidden="true">→</span></button>
+            <span class="attention-decoration">01</span>
+          </article>
+          <article class="overview-card recent-card">
+            <div class="overview-card-heading"><div><p class="eyebrow">ACTIVIDAD RECIENTE</p><h2>Lo último que llegó</h2></div><button type="button" class="quiet-button" (click)="setView('inbox')">Ver todo →</button></div>
+            <button type="button" class="recent-item" *ngFor="let message of messages.slice(0, 4); let index = index" (click)="selectedMessage = message">
+              <span [class]="'sender-avatar avatar-' + index">{{ message.remitente_email.slice(0, 1).toUpperCase() }}</span>
+              <span class="recent-copy"><strong>{{ message.subject }}</strong><small>{{ message.remitente_email }}</small></span>
+              <span class="recent-date">{{ message.received_at | date:'d MMM':'':'es' }}</span>
+            </button>
+          </article>
+        </div>
+        <ng-template #overviewUnavailable>
+          <div class="empty-feature"><span class="empty-feature-icon">✳</span><h2>Las métricas llegarán con el historial.</h2><p>Por ahora, el resumen analítico solo está disponible en la vista de muestra. La bandeja muestra los mensajes cargados desde Outlook.</p><button type="button" class="button button-outline" (click)="setView('inbox')">Abrir la bandeja <span aria-hidden="true">→</span></button></div>
+        </ng-template>
+      </section>
+
+      <section class="view secondary-view" *ngIf="activeView === 'planning'">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">CALENDARIO Y SEGUIMIENTO <span class="eyebrow-line"></span> CUPO MÁXIMO: {{ maxPerWeek }} POR SEMANA</p>
+            <h1>Planifica <em>por semana.</em></h1>
+            <p class="page-subtitle">Hasta {{ maxPerWeek }} solicitudes por semana. Previsualiza el formato Excel Helpdesk y aprueba su envío por correo.</p>
+          </div>
+          <div class="planning-header-actions">
+            <button type="button" class="button button-outline" *ngIf="plannedMessages.length" (click)="openExcelPreview()">
+              📋 Vista Previa Excel y Envío
+            </button>
+            <button type="button" class="button button-primary" (click)="setView('inbox')">Elegir otra solicitud <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+
+        <section class="inbox-panel" *ngIf="plannedMessages.length; else emptyPlanning">
+          <div class="panel-heading planning-panel-heading">
+            <div class="panel-title-group">
+              <h2>Solicitudes planificadas ({{ filteredPlannedMessages.length }})</h2>
+              <p>Máximo {{ maxPerWeek }} solicitudes por semana para envío en formato Excel Helpdesk.</p>
+            </div>
+            <div class="planning-toolbar">
+              <label class="select-wrap">
+                <span class="sr-only">Filtrar por semana</span>
+                <select [(ngModel)]="selectedPlanningWeek">
+                  <option value="">Todas las semanas ({{ plannedMessages.length }})</option>
+                  <option *ngFor="let wk of plannedWeeksSummary" [value]="wk.isoWeek">
+                    {{ wk.label }} ({{ wk.count }}/{{ maxPerWeek }} cupos)
+                  </option>
+                </select>
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
+              </label>
+              <button type="button" class="button button-outline" (click)="downloadExcelFile()">
+                ⬇ Descargar Excel (.xlsx)
+              </button>
+              <button type="button" class="button button-primary" (click)="openExcelPreview()">
+                ✓ Visualizar y Aprobar Envío
+              </button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="mail-table">
+              <thead>
+                <tr>
+                  <th class="col-head-sender">SEMANA</th>
+                  <th class="col-head-category">POSTERGADO POR PROYECTO</th>
+                  <th class="col-head-sender">USUARIO / CORREO</th>
+                  <th class="col-head-subject">ASUNTO</th>
+                  <th class="col-head-folder">CARPETA</th>
+                  <th class="col-head-actions"><span class="sr-only">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="mail-row" *ngFor="let item of filteredPlannedMessages; let idx = index" (click)="selectedMessage = item">
+                  <td class="col-cell-sender">
+                    <span class="planned-week-badge">📅 {{ formatPlanBadge(item) }}</span>
+                  </td>
+                  <td class="col-cell-category">
+                    <span class="category-tag" [class.category-terra]="item.postergado_por_proyecto && item.postergado_por_proyecto !== 'No'">
+                      {{ item.postergado_por_proyecto || 'No' }}
+                    </span>
+                  </td>
+                  <td class="col-cell-sender">
+                    <div class="sender-box">
+                      <span class="sender-name">{{ item.remitente_nombre || item.remitente_email.split('@')[0].replace('.', ' ') }}</span>
+                      <span class="sender-email">{{ item.remitente_email }}</span>
+                    </div>
+                  </td>
+                  <td class="col-cell-subject">
+                    <div class="subject-box">
+                      <span class="subject-title">{{ item.subject }}</span>
+                      <span class="subject-subtitle">{{ item.categoria || 'Sin categoría' }}</span>
+                    </div>
+                  </td>
+                  <td class="col-cell-folder">
+                    <div class="folder-label">
+                      <span class="folder-name">{{ item.carpeta_origen }}</span>
+                    </div>
+                  </td>
+                  <td class="col-cell-actions row-actions">
+                    <button type="button" class="btn-plan-row row-action" title="Cambiar semana / editar" (click)="openPlanner(item, $event)">
+                      <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4.5" width="14" height="13" rx="2" /><path d="M6.5 2.5v4M13.5 2.5v4M3 8.5h14M7 12h2M11 12h2" /></svg>
+                    </button>
+                    <button type="button" class="btn-detail-row row-more" title="Quitar de planificación" (click)="unplanMessage(item, $event)">×</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <ng-template #emptyPlanning>
+          <div class="feature-card">
+            <div class="feature-illustration"><span class="calendar-sheet"><small>OCT</small><strong>24</strong><i>2026</i></span><span class="feature-spark">✳</span></div>
+            <div class="feature-copy"><p class="eyebrow">PLANIFICACIÓN SEMANAL (MÁX. 4 POR SEMANA)</p><h2>De la bandeja al formato Excel Helpdesk.</h2><p>Abre una solicitud desde la Bandeja (icono de calendario a la derecha de cada fila) y asígnale una semana de trabajo (hasta 4 solicitudes por semana). Luego podrás previsualizar el cuadro Excel y aprobar su envío.</p><button type="button" class="button button-outline" (click)="setView('inbox')">Buscar una solicitud <span aria-hidden="true">→</span></button></div>
+          </div>
+        </ng-template>
+      </section>
+
+      <section class="view secondary-view" *ngIf="activeView === 'batches'">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">CORREO SALIENTE</p>
+            <h1>Reenvíos <em>con registro.</em></h1>
+            <p class="page-subtitle">Historial de planificaciones en Excel enviadas o abiertas en Outlook con tu aprobación.</p>
+          </div>
+          <button type="button" class="button button-outline" *ngIf="plannedMessages.length" (click)="setView('planning'); openExcelPreview()">
+            Nuevo envío Excel →
+          </button>
+        </div>
+
+        <section class="inbox-panel" *ngIf="sentBatches.length; else emptyBatches">
+          <div class="panel-heading">
+            <div class="panel-title-group">
+              <h2>Lotes de planificación enviados ({{ sentBatches.length }})</h2>
+              <p>Registro de envíos aprobados con archivo Excel Helpdesk adjunto.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="mail-table">
+              <thead>
+                <tr>
+                  <th class="col-head-date">FECHA</th>
+                  <th class="col-head-subject">ASUNTO / ARCHIVO</th>
+                  <th class="col-head-sender">DESTINATARIOS</th>
+                  <th class="col-head-category">SOLICITUDES</th>
+                  <th class="col-head-category">ESTADO</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="mail-row" *ngFor="let batch of sentBatches">
+                  <td class="col-cell-date">
+                    <span class="received-date">{{ batch.created_at | date:'d MMM, HH:mm':'':'es' }}</span>
+                  </td>
+                  <td class="col-cell-subject">
+                    <div class="subject-box">
+                      <span class="subject-title">{{ batch.subject }}</span>
+                      <span class="subject-subtitle">📎 {{ batch.filename }}</span>
+                    </div>
+                  </td>
+                  <td class="col-cell-sender">
+                    <div class="sender-box">
+                      <span class="sender-name">{{ batch.recipients.length }} destinatario(s)</span>
+                      <span class="sender-email">{{ batch.recipients.join(', ') }}</span>
+                    </div>
+                  </td>
+                  <td class="col-cell-category">
+                    <span class="category-tag">{{ batch.rows_count }} solicitudes</span>
+                  </td>
+                  <td class="col-cell-category">
+                    <span class="category-tag category-olive">
+                      {{ batch.status === 'sent' ? 'Enviado por Outlook' : 'Borrador abierto' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <ng-template #emptyBatches>
+          <div class="empty-feature"><span class="empty-feature-icon">↗</span><h2>Sin envíos registrados todavía.</h2><p>Cuando apruebes y envíes el formato Excel desde la pestaña Planificación, aquí verás el historial de cada envío y sus destinatarios.</p><button type="button" class="button button-outline" (click)="setView('planning')">Ir a Planificación →</button></div>
+        </ng-template>
+      </section>
+
+      <section class="view secondary-view" *ngIf="activeView === 'settings'">
+        <div class="page-heading"><div><p class="eyebrow">PREFERENCIAS DEL ESPACIO</p><h1>Todo en <em>su lugar.</em></h1><p class="page-subtitle">Conexiones y preferencias para tu espacio de trabajo.</p></div></div>
+        <div class="settings-card"><div class="settings-card-heading"><span class="settings-brand microsoft-brand">M</span><div><strong>Cuenta Microsoft ({{ connectedEmail || 'Sin cuenta detectada' }})</strong><p>Acceso a correo y calendario de Outlook</p></div><span class="connection-pill" [class.is-connected]="authenticated"><i></i>{{ authenticated ? 'Conectada' : 'Sin conectar' }}</span></div><div class="settings-card-footer"><span>{{ authenticated ? 'Conectado a ' + (connectedEmail || 'tu sesión de Outlook') : 'Inicia sesión para habilitar las funciones de Outlook.' }}</span><button type="button" class="button button-outline" (click)="startLogin()">{{ authenticated ? 'Cambiar / resincronizar' : 'Conectar cuenta' }}</button></div></div>
+        <div class="settings-note"><span>i</span><p>Tu cuenta se usa únicamente para las operaciones que solicitas. Los mensajes y credenciales no se almacenan en esta interfaz.</p></div>
+      </section>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" *ngIf="selectedMessage" (click)="selectedMessage = null">
+    <section class="detail-drawer" role="dialog" aria-modal="true" aria-label="Detalle de solicitud" (click)="$event.stopPropagation()">
+      <button type="button" class="drawer-close" aria-label="Cerrar detalle" (click)="selectedMessage = null">×</button>
+      <p class="eyebrow">DETALLE DE SOLICITUD <span class="eyebrow-line"></span> {{ selectedMessage.id.startsWith('demo-') ? 'MUESTRA' : 'OUTLOOK' }}</p>
+      <span class="detail-category">{{ selectedMessage.categoria || 'Sin categoría' }}</span>
+      <h2>{{ selectedMessage.subject }}</h2>
+      <div class="detail-sender"><span class="sender-avatar avatar-2">{{ selectedMessage.remitente_email.slice(0, 1).toUpperCase() }}</span><span><strong>{{ selectedMessage.remitente_email.split('@')[0].replace('.', ' ') }}</strong><small>{{ selectedMessage.remitente_email }}</small></span></div>
+      <div class="detail-meta">
+        <span>RECIBIDO</span><strong>{{ selectedMessage.received_at | date:'d MMMM yyyy, HH:mm':'':'es' }}</strong>
+        <span>CARPETA</span><strong>{{ selectedMessage.carpeta_origen }}</strong>
+        <span>AÑO FISCAL</span><strong>{{ selectedMessage.ano_fiscal || '—' }}</strong>
+        <span>PLANIFICACIÓN</span><strong>{{ selectedMessage.semana_planificada_inicio ? formatPlanBadge(selectedMessage) : 'Sin planificar' }}</strong>
+        <span>POSTERGADO PROYECTO</span><strong>{{ selectedMessage.postergado_por_proyecto || 'No' }}</strong>
+      </div>
+      <div class="detail-placeholder"><span>✳</span><p>El contenido del mensaje permanece en Outlook. Desde allí puedes revisar el correo original y sus archivos.</p></div>
+      <button type="button" class="button button-primary drawer-action" (click)="openPlanner(selectedMessage, $event)">Planificar esta solicitud <span aria-hidden="true">→</span></button>
+    </section>
+  </div>
+
+  <div class="modal-backdrop planner-backdrop" *ngIf="plannerMessage" (click)="plannerMessage = null">
+    <section class="planner-modal" role="dialog" aria-modal="true" aria-label="Planificar solicitud" (click)="$event.stopPropagation()">
+      <button type="button" class="drawer-close" aria-label="Cerrar planificación" (click)="plannerMessage = null">×</button>
+      <p class="eyebrow">NUEVA PLANIFICACIÓN · CUPO MÁXIMO {{ maxPerWeek }} POR SEMANA</p>
+      <h2>Reserva una semana.</h2>
+      <p class="planner-subtitle">Se agendará en Outlook y se agregará al formato Excel semanal de Helpdesk.</p>
+      <div class="planner-message"><span class="planner-message-icon">↗</span><span><strong>{{ plannerMessage.subject }}</strong><small>{{ plannerMessage.remitente_email }}</small></span></div>
+      <div class="week-selector-fields">
+        <label class="timezone-field">
+          Seleccionar semana del año (máx. {{ maxPerWeek }} solicitudes)
+          <select [ngModel]="plannerWeek" (ngModelChange)="onWeekChange($event)">
+            <option *ngFor="let wk of availableWeeks" [value]="wk.isoWeek">{{ formatWeekOptionLabel(wk) }}</option>
+          </select>
+        </label>
+        <label class="timezone-field">
+          O elegir otra semana en calendario
+          <input type="week" [ngModel]="plannerWeek" (ngModelChange)="onWeekChange($event)" />
+        </label>
+        <label class="timezone-field">
+          Postergado por proyecto (Columna B del Excel)
+          <input
+            type="text"
+            [(ngModel)]="plannerPostergado"
+            placeholder="Ej: No, Sí, o nombre del proyecto..."
+            class="text-input-field"
+          />
+        </label>
+        <div class="week-range-preview" *ngIf="plannerStart && plannerEnd">
+          <span>📅 Período Lunes a Viernes ({{ getWeekCount(plannerWeek, plannerMessage.id) }}/{{ maxPerWeek }} ocupados en esta semana):</span>
+          <strong>Lun {{ formatShortDate(plannerStart) }} → Vie {{ formatShortDate(plannerEnd) }}</strong>
+        </div>
+      </div>
+      <label class="timezone-field">Zona horaria<select [(ngModel)]="plannerTimezone"><option value="America/Guayaquil">Guayaquil / Quito · Ecuador</option><option value="America/Santiago">Santiago · Chile</option><option value="America/Bogota">Bogotá · Colombia</option><option value="America/Mexico_City">Ciudad de México</option><option value="UTC">UTC</option></select></label>
+      <p class="planner-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+      <div class="planner-actions"><button type="button" class="button button-outline" (click)="plannerMessage = null">Cancelar</button><button type="button" class="button button-primary" [disabled]="planningBusy" (click)="savePlan()">{{ planningBusy ? 'Guardando…' : 'Confirmar Planificación' }} <span aria-hidden="true">→</span></button></div>
+    </section>
+  </div>
+
+  <!-- MODAL DE VISTA PREVIA DEL FORMATO EXCEL Y APROBACIÓN DE ENVÍO -->
+  <div class="modal-backdrop planner-backdrop" *ngIf="excelPreviewOpen" (click)="excelPreviewOpen = false">
+    <section class="excel-preview-modal" role="dialog" aria-modal="true" aria-label="Vista previa de Excel y aprobación de envío" (click)="$event.stopPropagation()">
+      <button type="button" class="drawer-close" aria-label="Cerrar vista previa" (click)="excelPreviewOpen = false">×</button>
+      <p class="eyebrow">VISTA PREVIA Y APROBACIÓN DE ENVÍO · FORMATO EXCEL HELPDESK</p>
+      <h2>Revisa cómo se enviará el Excel.</h2>
+      <p class="planner-subtitle">
+        Puedes editar cualquier celda directamente en la hoja antes de descargar el archivo <strong>.xlsx</strong> o aprobar su envío por Outlook.
+      </p>
+
+      <!-- SIMULACIÓN VISUAL EXACTA DE LA HOJA DE EXCEL (A..E, Filas 1..N) -->
+      <div class="excel-sheet-container">
+        <div class="excel-sheet-bar">
+          <span class="excel-file-badge">📗 {{ excelFilename }}</span>
+          <span class="excel-sheet-hint">Vista previa interactiva (idéntica al archivo Excel adjunto y tabla del correo)</span>
+        </div>
+        <div class="excel-grid-scroll">
+          <table class="excel-grid-table">
+            <thead>
+              <tr class="excel-col-letters">
+                <th class="excel-row-num"></th>
+                <th>A</th>
+                <th>B</th>
+                <th>C</th>
+                <th>D</th>
+                <th>E</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Filas 1 a 3 combinadas en A1:B3 para LOGO HELPDESK -->
+              <tr>
+                <td class="excel-row-num">1</td>
+                <td colspan="2" rowspan="3" class="excel-logo-box">LOGO HELPDESK</td>
+                <td class="excel-empty-cell"></td>
+                <td class="excel-empty-cell"></td>
+                <td class="excel-empty-cell"></td>
+              </tr>
+              <tr>
+                <td class="excel-row-num">2</td>
+                <td class="excel-empty-cell"></td>
+                <td class="excel-empty-cell"></td>
+                <td class="excel-empty-cell"></td>
+              </tr>
+              <tr>
+                <td class="excel-row-num">3</td>
+                <td class="excel-empty-cell"></td>
+                <td class="excel-empty-cell"></td>
+                <td class="excel-empty-cell"></td>
+              </tr>
+              <!-- Fila 4 vacía de separación -->
+              <tr class="excel-spacer-row">
+                <td class="excel-row-num">4</td>
+                <td class="excel-empty-cell"></td>
+                <td class="excel-empty-cell"></td>
+                <td class="excel-empty-cell"></td>
+                <td class="excel-empty-cell"></td>
+                <td class="excel-empty-cell"></td>
+              </tr>
+              <!-- Fila 5: Encabezados del formato -->
+              <tr class="excel-header-row">
+                <td class="excel-row-num">5</td>
+                <th>SEMANA</th>
+                <th>POSTERGADO POR PROYECTO</th>
+                <th>USUARIO</th>
+                <th>CORREO</th>
+                <th>ASUNTO</th>
+              </tr>
+              <!-- Filas 6+: Solicitudes planificadas (editables) -->
+              <tr class="excel-data-row" *ngFor="let row of excelPreviewRows; let idx = index">
+                <td class="excel-row-num">{{ idx + 6 }}</td>
+                <td>
+                  <input type="text" [(ngModel)]="row.semana" class="excel-cell-input" />
+                </td>
+                <td>
+                  <input type="text" [(ngModel)]="row.postergado_por_proyecto" class="excel-cell-input" />
+                </td>
+                <td>
+                  <input type="text" [(ngModel)]="row.usuario" class="excel-cell-input" />
+                </td>
+                <td>
+                  <input type="text" [(ngModel)]="row.correo" class="excel-cell-input" />
+                </td>
+                <td>
+                  <input type="text" [(ngModel)]="row.asunto" class="excel-cell-input" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CONFIGURACIÓN DEL CORREO DE SALIDA -->
+      <div class="excel-mail-form">
+        <div class="excel-mail-row-2col">
+          <label class="timezone-field">
+            Para (Destinatarios separados por punto y coma)
+            <input type="text" [(ngModel)]="excelRecipientsText" class="text-input-field" placeholder="usuario1@empresa.com; usuario2@empresa.com" />
+          </label>
+          <label class="timezone-field">
+            CC (Con copia)
+            <input type="text" [(ngModel)]="excelCcText" class="text-input-field" placeholder="copia@empresa.com" />
+          </label>
+        </div>
+        <div class="excel-mail-row-2col">
+          <label class="timezone-field">
+            Asunto del correo
+            <input type="text" [(ngModel)]="excelSubject" class="text-input-field" />
+          </label>
+          <label class="timezone-field">
+            Nombre del archivo Excel adjunto
+            <input type="text" [(ngModel)]="excelFilename" class="text-input-field" />
+          </label>
+        </div>
+        <label class="timezone-field">
+          Mensaje de introducción (se incluirá arriba de la tabla en el correo)
+          <textarea [(ngModel)]="excelIntroText" rows="2" class="text-area-field"></textarea>
+        </label>
+      </div>
+
+      <p class="planner-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <div class="excel-preview-actions">
+        <button type="button" class="button button-outline" (click)="excelPreviewOpen = false">
+          Cerrar
+        </button>
+        <button type="button" class="button button-outline" (click)="downloadExcelFile()">
+          ⬇ Solo Descargar Excel (.xlsx)
+        </button>
+        <button
+          type="button"
+          class="button button-outline"
+          [disabled]="excelSendingBusy"
+          (click)="approveAndSendExcel('display')"
+          title="Abre la ventana de correo de Outlook con el Excel adjunto para que le des Enviar manualmente"
+        >
+          ✉ Abrir Borrador en Outlook
+        </button>
+        <button
+          type="button"
+          class="button button-primary"
+          [disabled]="excelSendingBusy"
+          (click)="approveAndSendExcel('send')"
+        >
+          {{ excelSendingBusy ? 'Procesando envío…' : '✓ Aprobar y Enviar Ahora' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

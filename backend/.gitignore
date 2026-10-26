@@ -1,0 +1,18 @@
+# Credenciales y variables de entorno
+.env
+.env.*
+!.env.example
+
+# Cachés de tokens MSAL / sesiones
+data/
+*.bin
+*.key
+*.pem
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage

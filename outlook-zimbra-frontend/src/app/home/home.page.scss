@@ -1,0 +1,875 @@
+/* ==========================================================================
+   UMBRAL PRO — DESIGN SYSTEM (SWISS SAPPHIRE)
+   ========================================================================== */
+:host {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+
+  /* 1. Capas de Fondo ( Azul Pastel Polar de Baja Fatiga ) */
+  --bg-canvas: #F4F7FB;
+  --bg-sidebar: #EAF0F7;
+  --bg-surface: #FFFFFF;
+  --bg-subtle-hover: #F8FAFD;
+
+  /* 2. Bordes de Precisión */
+  --border-hairline: #DCE5F0;
+  --border-focus: #93C5FD;
+
+  /* 3. Tipografía de Alto Contraste (WCAG AAA) */
+  --ink-primary: #0F172A;      /* Títulos, cifras y remitentes */
+  --ink-secondary: #334155;    /* Asuntos de correo y subtítulos */
+  --ink-muted: #64748B;        /* Fechas, carpetas y metadatos */
+
+  /* 4. Acento Zafiro Ejecutivo */
+  --brand-primary: #1D4ED8;
+  --brand-gradient: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+  --brand-badge-bg: #EFF6FF;
+  --brand-badge-border: #BFDBFE;
+  --brand-badge-text: #1E40AF;
+
+  /* 5. Estados Semánticos para Automatización de Correos */
+  --status-error-bg: rgba(244, 63, 94, 0.12);
+  --status-error-text: #E11D48;
+  --status-error-border: #F43F5E;
+  --status-ok-bg: rgba(16, 185, 129, 0.12);
+  --status-ok-text: #059669;
+  --status-ok-border: #10B981;
+
+  /* 6. Sombras Multicapa (Estilo Stripe / Linear) */
+  --shadow-card:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 6px 16px -4px rgba(15, 23, 42, 0.05);
+  --shadow-btn:
+    0 2px 8px -1px rgba(29, 78, 216, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+
+  color: var(--ink-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Modo Noche Operativo (con clase .dark en body) */
+:host-context(body.dark) {
+  --bg-canvas: #0B1120;
+  --bg-sidebar: #0F172A;
+  --bg-surface: #131C31;
+  --bg-subtle-hover: #19243D;
+  --border-hairline: #1E293B;
+  --ink-primary: #F8FAFC;
+  --ink-secondary: #CBD5E1;
+  --ink-muted: #64748B;
+  --brand-primary: #3B82F6;
+  --brand-badge-bg: rgba(59, 130, 246, 0.15);
+  --brand-badge-border: rgba(59, 130, 246, 0.30);
+  --brand-badge-text: #93C5FD;
+}
+
+/* ==========================================================================
+   ARQUITECTURA DE SUPERFICIES EN 3 CAPAS + COMPONENTES CLAVE
+   ========================================================================== */
+
+.workspace {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-canvas);
+}
+
+/* Capa 1: Sidebar (#EAF0F7) */
+.sidebar {
+  overflow-y: auto;
+  background: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--border-hairline) !important;
+}
+
+.brand-mark {
+  background: var(--brand-gradient) !important;
+}
+
+.brand-mark span {
+  background: #FFFFFF !important;
+}
+
+.brand-copy strong {
+  color: var(--ink-primary);
+}
+
+.brand-copy small,
+.nav-caption {
+  color: var(--ink-muted) !important;
+}
+
+.workspace-picker,
+.integration-card {
+  background: rgba(255, 255, 255, 0.65) !important;
+  border: 1px solid var(--border-hairline) !important;
+}
+
+:host-context(body.dark) .workspace-picker,
+:host-context(body.dark) .integration-card {
+  background: rgba(19, 28, 49, 0.75) !important;
+}
+
+.workspace-avatar,
+.profile-avatar,
+.top-avatar {
+  background: var(--brand-badge-bg) !important;
+  border: 1px solid var(--brand-badge-border);
+  color: var(--brand-badge-text) !important;
+}
+
+.nav-link {
+  color: var(--ink-secondary) !important;
+  border-left: 3px solid transparent;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.55) !important;
+  color: var(--ink-primary) !important;
+}
+
+/* Item Activo del Sidebar ("Bandeja") */
+.sidebar-item-active,
+.nav-link.active {
+  background: var(--bg-surface) !important;
+  color: var(--brand-primary) !important;
+  border-left: 3px solid var(--brand-primary) !important;
+  border-radius: 0 8px 8px 0 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+.nav-count {
+  background: var(--brand-badge-bg) !important;
+  border: 1px solid var(--brand-badge-border);
+  color: var(--brand-badge-text) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Capa 2: Lienzo (#F4F7FB) */
+.main-area {
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  background: var(--bg-canvas);
+}
+
+.topbar {
+  background: var(--bg-canvas) !important;
+  border-bottom: 1px solid var(--border-hairline) !important;
+}
+
+.content-shell {
+  padding: 20px 32px 48px;
+}
+
+.page-heading {
+  margin: 4px 0 16px;
+}
+
+.page-heading h1 {
+  font-size: clamp(24px, 2.4vw, 34px);
+  color: var(--ink-primary);
+}
+
+.page-heading h1 em {
+  color: var(--brand-primary);
+}
+
+.page-subtitle,
+.eyebrow {
+  color: var(--ink-muted) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Capa 3: Tarjetas KPI y Contenedor de Tabla (#FFFFFF) */
+.umbral-card {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-hairline) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-card) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-grid {
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  min-height: 92px;
+  padding: 12px 16px 10px;
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-hairline) !important;
+  box-shadow: var(--shadow-card) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value {
+  font-size: 24px;
+  color: var(--ink-primary) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Contenedor de Iconos (Duotono con borde fino) */
+.icon-box {
+  background: var(--brand-badge-bg) !important;
+  border: 1px solid var(--brand-badge-border) !important;
+  color: var(--brand-badge-text) !important;
+  border-radius: 8px !important;
+}
+
+/* Botón Principal ("Sincronizar bandeja") */
+.btn-sync,
+.button-primary {
+  background: var(--brand-gradient) !important;
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 8px 16px;
+  box-shadow: var(--shadow-btn) !important;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.btn-sync:hover,
+.button-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.inbox-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-hairline) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.filters-row {
+  flex-wrap: wrap;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.search-box,
+.select-wrap select {
+  background: var(--bg-canvas) !important;
+  border: 1px solid var(--border-hairline) !important;
+  color: var(--ink-primary) !important;
+}
+
+.search-box:focus-within,
+.select-wrap select:focus {
+  border-color: var(--border-focus) !important;
+}
+
+.table-wrap {
+  max-height: clamp(280px, calc(100vh - 360px), 580px);
+  overflow-y: auto;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+}
+
+.mail-table {
+  width: 100%;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+
+.mail-row {
+  border-left: 4px solid transparent;
+  border-bottom: 1px solid var(--border-hairline) !important;
+  transition: background 120ms ease;
+}
+
+.mail-row:hover {
+  background: var(--bg-subtle-hover) !important;
+}
+
+/* Filas de Correo con Triaje Semántico en 0.5 segundos */
+.email-row-failure {
+  border-left: 4px solid var(--status-error-border) !important;
+}
+
+.email-row-success {
+  border-left: 4px solid var(--status-ok-border) !important;
+}
+
+/* Iconos de Estado Dedicados (! / ✓) */
+.status-avatar-failure {
+  background: var(--status-error-bg) !important;
+  color: var(--status-error-text) !important;
+  border: 1px solid rgba(244, 63, 94, 0.32);
+  font-weight: 800 !important;
+  font-size: 13px !important;
+}
+
+.status-avatar-success {
+  background: var(--status-ok-bg) !important;
+  color: var(--status-ok-text) !important;
+  border: 1px solid rgba(16, 185, 129, 0.32);
+  font-weight: 800 !important;
+  font-size: 12px !important;
+}
+
+.status-avatar-neutral {
+  background: var(--brand-badge-bg) !important;
+  color: var(--brand-badge-text) !important;
+  border: 1px solid var(--brand-badge-border);
+  font-weight: 700 !important;
+}
+
+/* =========================================================
+   ENCABEZADOS DE TABLA (Cada columna por separado)
+   ========================================================= */
+
+.col-head-sender {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  width: 210px;
+  background: var(--bg-subtle-hover);
+  box-shadow: 0 1px 0 var(--border-hairline);
+  color: var(--ink-muted);
+  text-align: left !important;
+}
+
+.col-head-subject {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  width: auto;
+  background: var(--bg-subtle-hover);
+  box-shadow: 0 1px 0 var(--border-hairline);
+  color: var(--ink-muted);
+  text-align: left !important;
+}
+
+.col-head-category {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  width: 130px;
+  background: var(--bg-subtle-hover);
+  box-shadow: 0 1px 0 var(--border-hairline);
+  color: var(--ink-muted);
+  text-align: left !important;
+}
+
+.col-head-folder {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  width: 165px;
+  background: var(--bg-subtle-hover);
+  box-shadow: 0 1px 0 var(--border-hairline);
+  color: var(--ink-muted);
+  text-align: left !important;
+}
+
+.col-head-date {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  width: 115px;
+  background: var(--bg-subtle-hover);
+  box-shadow: 0 1px 0 var(--border-hairline);
+  color: var(--ink-muted);
+  text-align: left !important;
+}
+
+.col-head-actions {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  width: 76px;
+  background: var(--bg-subtle-hover);
+  box-shadow: 0 1px 0 var(--border-hairline);
+  color: var(--ink-muted);
+  text-align: right !important;
+}
+
+/* =========================================================
+   1. COLUMNA REMITENTE (Independiente)
+   ========================================================= */
+
+.col-cell-sender {
+  width: 210px;
+  overflow: hidden;
+  font-size: 11px;
+}
+
+.sender-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.sender-name {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-primary);
+  font-size: 12px;
+  font-weight: 650;
+  text-align: left;
+  text-transform: capitalize;
+}
+
+.sender-email {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-muted);
+  font-size: 10.5px;
+  text-align: left;
+}
+
+/* =========================================================
+   2. COLUMNA ASUNTO (Independiente)
+   ========================================================= */
+
+.col-cell-subject {
+  width: auto;
+  overflow: hidden;
+  font-size: 11px;
+}
+
+.subject-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+  width: 100%;
+  max-width: 100%;
+  padding-left: 10px;
+  overflow: hidden;
+}
+
+.subject-title {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-secondary);
+  font-size: 12px;
+  font-weight: 580;
+  text-align: left;
+}
+
+.subject-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-muted);
+  font-size: 10.5px;
+  text-align: left;
+}
+
+.planned-week-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--brand-badge-bg);
+  border: 1px solid var(--brand-badge-border);
+  color: var(--brand-badge-text);
+  font-size: 10px;
+  font-weight: 650;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.week-selector-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.week-selector-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.week-selector-fields select,
+.week-selector-fields input[type='week'] {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  color: var(--ink-primary);
+  font-size: 13px;
+}
+
+.week-range-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--brand-badge-bg);
+  border: 1px solid var(--brand-badge-border);
+  color: var(--brand-badge-text);
+}
+
+.week-range-preview-label {
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.week-range-preview-value {
+  color: var(--brand-badge-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   3. COLUMNA CATEGORÍA (Independiente)
+   ========================================================= */
+
+.col-cell-category {
+  width: 130px;
+  overflow: hidden;
+  text-align: left;
+}
+
+.category-tag {
+  font-size: 10.5px;
+  background: var(--bg-canvas) !important;
+  border: 1px solid var(--border-hairline) !important;
+  color: var(--ink-secondary) !important;
+}
+
+/* =========================================================
+   4. COLUMNA CARPETA (Independiente)
+   ========================================================= */
+
+.col-cell-folder {
+  width: 165px;
+  overflow: hidden;
+}
+
+.folder-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.folder-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-muted);
+  font-size: 10.5px;
+  text-align: left;
+}
+
+/* =========================================================
+   5. COLUMNA FECHA RECIBIDO (Independiente)
+   ========================================================= */
+
+.col-cell-date {
+  width: 115px;
+  overflow: hidden;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.received-date {
+  color: var(--ink-muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   6. COLUMNA ACCIONES (Independiente)
+   ========================================================= */
+
+.col-cell-actions {
+  width: 76px;
+}
+
+/* =========================================================
+   PIE DE TABLA Y RESPONSIVE
+   ========================================================= */
+
+.table-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  min-height: 50px;
+  background: var(--bg-subtle-hover);
+  border-top: 1px solid var(--border-hairline);
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pagination button {
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+}
+
+.detail-drawer {
+  overflow-y: auto;
+}
+
+/* =========================================================
+   7. VISTA PREVIA DE FORMATO EXCEL HELPDESK Y APROBACIÓN
+   ========================================================= */
+
+.planning-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.planning-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.planning-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.text-input-field {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d9d6cc;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #383b34;
+  font-size: 12.5px;
+}
+
+.text-area-field {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d9d6cc;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #383b34;
+  font-size: 12.5px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.excel-preview-modal {
+  position: relative;
+  width: min(1040px, 95vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 26px 28px;
+  border-radius: 18px;
+  background: #fbfaf6;
+  border: 1px solid #e3e0d6;
+  box-shadow: 0 24px 60px rgba(34, 36, 31, 0.22);
+}
+
+.excel-sheet-container {
+  margin: 14px 0 18px;
+  border: 1px solid #bfc4bc;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.excel-sheet-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: #217346;
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.excel-file-badge {
+  font-weight: 700;
+}
+
+.excel-sheet-hint {
+  opacity: 0.9;
+  font-size: 11px;
+}
+
+.excel-grid-scroll {
+  overflow-x: auto;
+  padding: 0;
+}
+
+.excel-grid-table {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+  font-size: 12.5px;
+  background: #ffffff;
+}
+
+.excel-col-letters th {
+  background: #f3f2f1;
+  color: #555;
+  font-weight: 600;
+  font-size: 11px;
+  text-align: center;
+  border: 1px solid #d4d4d4;
+  padding: 4px 8px;
+}
+
+.excel-row-num {
+  width: 34px;
+  background: #f3f2f1;
+  color: #555;
+  font-weight: 600;
+  font-size: 11px;
+  text-align: center;
+  border: 1px solid #d4d4d4;
+  user-select: none;
+}
+
+.excel-logo-box {
+  border: 1.5px solid #1f1f1f !important;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 700;
+  font-size: 15px;
+  color: #1f1f1f;
+  background: #ffffff;
+  height: 68px;
+  letter-spacing: 0.3px;
+}
+
+.excel-empty-cell {
+  border: 1px solid #ececec;
+  height: 22px;
+  background: #ffffff;
+}
+
+.excel-spacer-row td {
+  height: 20px;
+}
+
+.excel-header-row th {
+  border: 1.5px solid #1f1f1f;
+  background: #f8f9f7;
+  color: #111111;
+  font-weight: 700;
+  font-size: 12px;
+  text-align: left;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.excel-data-row td {
+  border: 1px solid #2b2b2b;
+  padding: 0;
+  background: #ffffff;
+}
+
+.excel-cell-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  padding: 6px 10px;
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+  font-size: 12.5px;
+  color: #1f1f1f;
+  background: transparent;
+}
+
+.excel-cell-input:focus {
+  background: #eef7f0;
+  box-shadow: inset 0 0 0 1.5px #217346;
+}
+
+.excel-mail-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f4f3ed;
+  border: 1px solid #e2dfd5;
+  margin-bottom: 14px;
+}
+
+.excel-mail-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.excel-preview-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+@media (max-width: 1100px) {
+  .content-shell {
+    padding: 16px 20px 40px;
+  }
+
+  .table-wrap {
+    max-height: calc(100vh - 330px);
+  }
+}
+
+@media (max-width: 760px) {
+  .main-area {
+    width: 100%;
+    margin-left: 0;
+    padding-bottom: 76px;
+  }
+
+  .folder-select {
+    display: flex !important;
+    flex-basis: 100%;
+  }
+
+  .table-wrap {
+    max-height: calc(100vh - 310px);
+  }
+}
