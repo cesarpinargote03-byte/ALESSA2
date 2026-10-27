@@ -1,53 +1,42 @@
 # Plan técnico
 
-## Arquitectura propuesta
+## Arquitectura implementada
 
-- **Frontend:** Ionic/Angular consume la API de FastAPI y muestra la bandeja, la planificación, los reportes de lotes y las métricas.
-- **Backend:** FastAPI valida y autoriza las operaciones, integra Microsoft Graph y SMTP Zimbra, y persiste solicitudes y resultados.
-- **Persistencia:** PostgreSQL. Supabase Free Tier es una opción condicionada a sus cuotas y disponibilidad.
-- **Autenticación Microsoft:** MSAL con permisos mínimos y caché persistente de tokens protegida. La autenticación interactiva inicial y la renovación siguen las políticas de Microsoft Entra ID.
-- **Operaciones externas:** Microsoft Graph por HTTPS/TLS; Zimbra por SMTP con TLS.
+- **Frontend (`outlook-zimbra-frontend`):** Aplicación Ionic/Angular 20 con el sistema de diseño **Umbral Pro — Swiss Sapphire** (superficies en 3 capas + Modo Noche), triaje visual semántico de alertas, bandeja paginada con scroll independiente, planificación por semana ISO (máximo 4 solicitudes por semana) y modal de vista previa y aprobación del archivo **Excel Helpdesk (`.xlsx`)**.
+- **Backend (`backend`):** Servicio FastAPI con soporte dual de integración Outlook:
+  - **Modo Local MAPI (`OUTLOOK_MODE=local`):** Lectura de alta velocidad de todas las cuentas, carpetas y subcarpetas de Outlook Desktop mediante `Folder.GetTable().GetArray()`, creación de eventos en calendario con `pywintypes.Time` y generación/envío de reportes en Excel `.xlsx` con logo incrustado.
+  - **Modo Microsoft Graph (`OUTLOOK_MODE=graph`):** OAuth 2.0 mediante MSAL con caché persistente cifrada con `Fernet`.
+- **Seguridad de sesiones y secretos:** Cookie de sesión firmada (`HttpOnly`), dependencia `require_graph_access_token` en todos los endpoints de negocio y exclusión estricta de `.env` y cachés en `.gitignore`.
 
-## Modelo de datos inicial
-
-### Solicitud
+## Modelo de datos de Solicitud y Planificación
 
 | Campo | Tipo | Descripción |
 |---|---|---|
-| `id` | UUID, PK | Identificador interno |
-| `outlook_message_id` | VARCHAR, UNIQUE | Identificador del mensaje en Outlook |
-| `categoria` | VARCHAR, nullable | Categoría de Outlook |
-| `ano_fiscal` | INTEGER, nullable | Año fiscal asociado |
-| `remitente_email` | VARCHAR | Dirección del remitente |
-| `carpeta_origen` | VARCHAR | Carpeta de Outlook |
-| `semana_planificada_inicio` | DATE, nullable | Inicio de la semana planificada |
-| `semana_planificada_fin` | DATE, nullable | Fin de la semana planificada |
-| `outlook_event_id` | VARCHAR, nullable | Identificador del evento de Outlook |
-| `estado_planificacion` | ENUM | `Pendiente`, `Previsualizado`, `Planificado`, `Enviado`, `Error` |
-| `created_at` / `updated_at` | TIMESTAMPTZ | Auditoría de creación y actualización |
+| `id` | VARCHAR | `EntryID` de MAPI o identificador de Microsoft Graph |
+| `subject` | VARCHAR | Asunto del mensaje |
+| `remitente_email` | VARCHAR | Dirección SMTP del remitente (`PR_SENDER_SMTP_ADDRESS`) |
+| `remitente_nombre` | VARCHAR | Nombre para mostrar del remitente |
+| `categoria` / `categorias` | VARCHAR / LIST | Categorías de Outlook asociadas al correo |
+| `ano_fiscal` | INTEGER, nullable | Año de recepción del correo |
+| `carpeta_origen` | VARCHAR | Ruta completa de la carpeta/subcarpeta en Outlook |
+| `semana_iso` | VARCHAR, nullable | Semana ISO asignada (ej. `2026-W44`) |
+| `semana_numero` | INTEGER, nullable | Número de semana del año (`1..53`) |
+| `semana_planificada_inicio` | DATE, nullable | Lunes de la semana planificada |
+| `semana_planificada_fin` | DATE, nullable | Viernes de la semana planificada |
+| `postergado_por_proyecto` | VARCHAR | Valor para la columna B del Excel Helpdesk (`No`, `Sí` o nombre del proyecto) |
+| `outlook_event_id` | VARCHAR, nullable | Identificador de la cita creada en el calendario de Outlook |
+| `estado_planificacion` | VARCHAR | `Planificado` |
 
-El resultado de crear el evento y el de enviar la notificación deben poder representarse por separado, de modo que los fallos parciales puedan recuperarse sin duplicar operaciones exitosas.
+## Contratos de API vigentes
 
-### Lotes Zimbra
-
-Persistir un registro por lote y resultados por mensaje/destinatario: estado, fecha de intento, resultado, código de error no sensible e indicador de reintento. La estructura final se concreta al implementar el feature.
-
-## Contratos de API iniciales
-
-- `POST /api/v1/outlook/sync`: inicia o solicita sincronización de metadatos de Microsoft Graph. Soporta paginación, tratamiento de límites y sincronización incremental si aplica.
-- `GET /api/v1/correos?categoria={cat}&ano={ano}&folder={folder}&remitente={email}&page={n}&page_size={size}`: devuelve mensajes almacenados/cacheados con filtros combinables y paginación.
-- `POST /api/v1/planificacion/asignar`: recibe `message_id`, fechas de semana y zona horaria. Registra el evento en Outlook y conserva el resultado de cada paso.
-- `POST /api/v1/zimbra/reenvio-masivo`: recibe una lista acotada de IDs de Outlook y destinatarios. Responde con un identificador de lote.
-- `GET /api/v1/zimbra/reenvio-masivo/{batch_id}`: devuelve estado y resultados persistidos del lote.
-
-Todos los endpoints validan entradas, permisos y límites antes de iniciar operaciones externas. La API deberá autenticar y autorizar al administrador según el entorno de despliegue.
-
-## Consideraciones de fiabilidad
-
-- Respetar la paginación y `Retry-After` ante respuestas `429` de Graph.
-- Aplicar idempotencia o detección de operaciones previas para evitar duplicados.
-- Registrar fallos parciales y permitir reintentos acotados solo de pasos fallidos.
-- Configurar zona horaria institucional y regla de semana de forma explícita.
-- Limitar tamaño de lotes, concurrencia, timeout y reintentos de SMTP.
-- No incluir secretos ni contenido sensible en logs o reportes.
-
+- `POST /api/v1/auth/login-local`: autentica contra la instancia local de Outlook Desktop en Windows y detecta el correo activo.
+- `GET /api/v1/auth/status` y `GET /api/v1/auth/me`: estado de autenticación y correo de la sesión.
+- `POST /api/v1/outlook/sync`: sincroniza todos los correos de todas las carpetas y subcarpetas sin tope fijo.
+- `GET /api/v1/outlook/filtros`: devuelve el resumen de carpetas, categorías y años fiscales.
+- `GET /api/v1/correos`: devuelve los correos sincronizados con filtros combinables.
+- `GET /api/v1/planificacion`: devuelve las solicitudes planificadas ordenadas por semana.
+- `POST /api/v1/planificacion/asignar`: valida el límite máximo de **4 solicitudes por semana**, crea la cita en el calendario de Outlook y guarda la planificación.
+- `POST /api/v1/planificacion/excel`: genera y devuelve el archivo `.xlsx` con el logo proporcional de Helpdesk en `A1:B3` (`<xdr:oneCellAnchor>`) y la tabla `SEMANA | POSTERGADO POR PROYECTO | USUARIO | CORREO | ASUNTO`.
+- `POST /api/v1/planificacion/enviar-excel`: genera el `.xlsx`, lo adjunta junto con la tabla HTML y el logo en línea (`cid:logo_helpdesk_umbral`) y abre el borrador en Outlook (`mode="display"`) o envía el correo tras la aprobación (`mode="send"`).
+- `GET /api/v1/planificacion/envios`: devuelve el historial de lotes de planificación enviados.
+- `POST /api/v1/zimbra/reenvio-masivo` y `GET /api/v1/zimbra/reenvio-masivo/{batch_id}`: endpoints de reenvío SMTP protegidos por sesión autenticada.

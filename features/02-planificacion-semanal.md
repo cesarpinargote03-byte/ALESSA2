@@ -1,30 +1,24 @@
-# Feature 2: Planificación semanal
+# Feature 2: Planificación Semanal (Máx. 4 por Semana) y Formato Excel Helpdesk
 
 ## Objetivo
 
-Asignar una solicitud a una semana, reflejar la planificación en el calendario de Outlook y enviar una confirmación HTML al solicitante.
+Asignar solicitudes a semanas de trabajo (con un cupo máximo de 4 solicitudes por semana), agendarlas en el calendario de Outlook y generar el reporte oficial en **Excel (`.xlsx`) de Helpdesk** con vista previa interactiva y aprobación del administrador antes de enviarlo por correo.
 
 ## Historia de usuario
 
-Como administrador único, quiero asignar una solicitud a una semana de planificación, registrar el periodo en el calendario de Outlook y notificar al solicitante para coordinar el trabajo.
+Como administrador único, quiero planificar hasta 4 solicitudes por semana, registrar si alguna fue postergada por proyecto, visualizar en pantalla cómo quedará el cuadro de Excel con el logo de Helpdesk y aprobar su envío o descarga.
 
-## Criterios de aceptación
+## Criterios de aceptación implementados
 
-- Se puede previsualizar el mensaje HTML antes de enviarlo.
-- Si falta una variable requerida o no es válida (por ejemplo, nombre o fecha), el envío queda deshabilitado y se identifica el dato que debe corregirse.
-- La zona horaria institucional y la regla para calcular inicio y fin de semana están configuradas explícitamente; no se infieren de la zona horaria del navegador.
-- Los errores de Microsoft Graph y los conflictos de calendario se muestran al administrador y nunca se reportan como éxito.
-- Se evita crear eventos duplicados cuando se reintenta una operación.
-- El sistema registra por separado el resultado de crear el evento y el de enviar la notificación.
-- Si se crea el evento, pero falla el envío de la confirmación, se permite reintentar solo el paso fallido sin duplicar el evento.
-- El estado de la solicitud solo avanza después de confirmar cada operación correspondiente.
-
-## Flujo esperado
-
-1. Seleccionar solicitud y semana.
-2. Validar fechas, zona horaria y datos requeridos por la plantilla.
-3. Mostrar la previsualización y solicitar confirmación del administrador.
-4. Crear o verificar el evento en Outlook.
-5. Enviar la notificación HTML.
-6. Persistir y mostrar el resultado de cada paso.
-
+- **Selección por semana ISO (`YYYY-Www`):** El modal de planificación permite elegir entre las próximas 20 semanas o cualquier semana del calendario, calculando automáticamente el bloque laboral de lunes (09:00) a viernes (18:00).
+- **Límite de 4 solicitudes por semana:** Cada semana muestra su ocupación actual (`[X/4 cupos]`). Al alcanzar `4/4`, el sistema sugiere automáticamente la siguiente semana libre e impide sobrecargar una semana llena tanto en frontend como en backend (`HTTP 409`).
+- **Creación de cita en Outlook local:** Se registra en el calendario de Outlook mediante `pywintypes.Time` para garantizar compatibilidad con configuraciones regionales de Windows en español.
+- **Formato Excel Helpdesk (`.xlsx`) con Logo Proporcional:**
+  - Celdas `A1:B3` combinadas con el logo oficial (`src/assets/logo-helpdesk.png`) anclado mediante `<xdr:oneCellAnchor>` respetando su relación de aspecto exacta sin deformarse.
+  - Fila 4 de separación en blanco.
+  - Fila 5 con encabezados: `SEMANA | POSTERGADO POR PROYECTO | USUARIO | CORREO | ASUNTO`.
+- **Vista Previa Interactiva y Aprobación:**
+  - Antes de enviar, el administrador visualiza la hoja de Excel en pantalla, puede editar cualquier celda o destinatario y elegir entre:
+    1. **Solo Descargar Excel (`.xlsx`)**
+    2. **Abrir Borrador en Outlook (`mode="display"`)**
+    3. **Aprobar y Enviar Ahora (`mode="send"`)**
