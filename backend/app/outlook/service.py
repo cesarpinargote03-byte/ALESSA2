@@ -171,14 +171,10 @@ class OutlookGraphService:
             normalized: list[dict[str, Any]] = []
             seen_ids: set[str] = set()
             target_cf = target_folder.strip().casefold() if target_folder else None
-            max_per_folder = max(1, min(int(limit_per_folder), 5000))
-            max_total = 10000
+            max_per_folder = max(1, int(limit_per_folder)) if limit_per_folder else 999999
 
             for store_name, root_folder in roots:
                 for folder_path, folder_name, outlook_folder in self._walk_mail_folders(root_folder):
-                    if len(normalized) >= max_total:
-                        break
-
                     if target_cf and (
                         target_cf != folder_path.casefold()
                         and target_cf != folder_name.casefold()
@@ -191,7 +187,7 @@ class OutlookGraphService:
                         folder_path=folder_path,
                         folder_name=folder_name,
                         store_name=store_name,
-                        max_items=min(max_per_folder, max_total - len(normalized)),
+                        max_items=max_per_folder,
                         seen_ids=seen_ids,
                     )
                     normalized.extend(folder_msgs)
@@ -565,7 +561,7 @@ class OutlookGraphService:
             ]
 
         page_number = max(1, int(page))
-        page_size_number = max(1, min(int(page_size), 10000))
+        page_size_number = max(1, int(page_size))
         start = (page_number - 1) * page_size_number
         end = start + page_size_number
         items = filtered[start:end]
@@ -776,10 +772,22 @@ class OutlookGraphService:
         return list(reversed(self.sent_batches))
 
     @staticmethod
-    def build_planning_excel_bytes(rows: list[dict[str, Any]]) -> bytes:
+    def _resolve_logo_path() -> str | None:
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+        candidates = [
+            os.path.join(base_dir, "outlook-zimbra-frontend", "src", "assets", "logo-helpdesk.png"),
+            os.path.join(base_dir, "outlook-zimbra-frontend", "src", "assets", "logo-helpdesk.jpg"),
+        ]
+        for path in candidates:
+            if os.path.isfile(path):
+                return path
+        return None
+
+    @classmethod
+    def build_planning_excel_bytes(cls, rows: list[dict[str, Any]]) -> bytes:
         """
         Generate a genuine .xlsx workbook matching the Helpdesk layout:
-        - A1:B3 merged -> 'LOGO HELPDESK' (bordered, centered, bold)
+        - A1:B3 merged -> Helpdesk Logo image embedded (with 'HELPDESK' fallback)
         - Row 4 empty
         - Row 5 headers (A5:E5): SEMANA | POSTERGADO POR PROYECTO | USUARIO | CORREO | ASUNTO
         - Rows 6+: Planned items
@@ -787,22 +795,26 @@ class OutlookGraphService:
         def xml_escape(val: Any) -> str:
             return html.escape(str(val if val is not None else ""), quote=True)
 
+        logo_path = cls._resolve_logo_path()
+        has_logo = logo_path is not None
+
         sheet_rows_xml: list[str] = []
 
         # Rows 1-3: Merged A1:B3 box for LOGO HELPDESK (style s="1" = bold centered with border)
+        fallback_text = "" if has_logo else "LOGO HELPDESK"
         sheet_rows_xml.append(
-            '<row r="1" ht="22" customHeight="1">'
-            '<c r="A1" t="inlineStr" s="1"><is><t>LOGO HELPDESK</t></is></c>'
+            '<row r="1" ht="26" customHeight="1">'
+            f'<c r="A1" t="inlineStr" s="1"><is><t>{fallback_text}</t></is></c>'
             '<c r="B1" s="1"/>'
             "</row>"
         )
         sheet_rows_xml.append(
-            '<row r="2" ht="22" customHeight="1">'
+            '<row r="2" ht="26" customHeight="1">'
             '<c r="A2" s="1"/><c r="B2" s="1"/>'
             "</row>"
         )
         sheet_rows_xml.append(
-            '<row r="3" ht="22" customHeight="1">'
+            '<row r="3" ht="26" customHeight="1">'
             '<c r="A3" s="1"/><c r="B3" s="1"/>'
             "</row>"
         )
@@ -841,9 +853,11 @@ class OutlookGraphService:
             )
             sheet_rows_xml.append(row_xml)
 
+        drawing_tag = '<drawing r:id="rId1"/>' if has_logo else ""
         sheet_xml = (
             '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+            'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
             "<cols>"
             '<col min="1" max="1" width="24" customWidth="1"/>'
             '<col min="2" max="2" width="28" customWidth="1"/>'
@@ -853,6 +867,7 @@ class OutlookGraphService:
             "</cols>"
             f"<sheetData>{''.join(sheet_rows_xml)}</sheetData>"
             '<mergeCells count="1"><mergeCell ref="A1:B3"/></mergeCells>'
+            f"{drawing_tag}"
             "</worksheet>"
         )
 
@@ -918,14 +933,23 @@ class OutlookGraphService:
             "</Relationships>"
         )
 
+        png_default = '<Default Extension="png" ContentType="image/png"/>' if has_logo else ""
+        drawing_override = (
+            '<Override PartName="/xl/drawings/drawing1.xml" '
+            'ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>'
+            if has_logo
+            else ""
+        )
         content_types_xml = (
             '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
             '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
             '<Default Extension="xml" ContentType="application/xml"/>'
+            f"{png_default}"
             '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
             '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
             '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+            f"{drawing_override}"
             "</Types>"
         )
 
@@ -937,6 +961,70 @@ class OutlookGraphService:
             zf.writestr("xl/_rels/workbook.xml.rels", workbook_rels_xml)
             zf.writestr("xl/styles.xml", styles_xml)
             zf.writestr("xl/worksheets/sheet1.xml", sheet_xml)
+
+            if has_logo and logo_path is not None:
+                import struct
+
+                with open(logo_path, "rb") as img_fh:
+                    png_bytes = img_fh.read()
+                zf.writestr("xl/media/image1.png", png_bytes)
+
+                # Read exact PNG pixel dimensions to preserve 100% original aspect ratio (never stretch!)
+                img_w, img_h = 834, 278
+                if len(png_bytes) >= 24 and png_bytes[:8] == b"\x89PNG\r\n\x1a\n":
+                    try:
+                        img_w, img_h = struct.unpack(">II", png_bytes[16:24])
+                    except Exception:
+                        pass
+
+                # Target height = 74px (704,850 EMUs), width scaled strictly by original aspect ratio
+                target_h_px = 74
+                target_w_px = int(round(target_h_px * (img_w / max(1, img_h))))
+                cx_emu = target_w_px * 9525
+                cy_emu = target_h_px * 9525
+
+                sheet_rels_xml = (
+                    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+                    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>'
+                    "</Relationships>"
+                )
+                drawing_rels_xml = (
+                    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+                    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image1.png"/>'
+                    "</Relationships>"
+                )
+                drawing_xml = (
+                    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                    '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" '
+                    'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+                    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+                    "<xdr:oneCellAnchor>"
+                    "<xdr:from><xdr:col>0</xdr:col><xdr:colOff>457200</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>123825</xdr:rowOff></xdr:from>"
+                    f'<xdr:ext cx="{cx_emu}" cy="{cy_emu}"/>'
+                    "<xdr:pic>"
+                    "<xdr:nvPicPr>"
+                    '<xdr:cNvPr id="2" name="Logo Helpdesk"/>'
+                    "<xdr:cNvPicPr><a:picLocks noChangeAspect=\"1\"/></xdr:cNvPicPr>"
+                    "</xdr:nvPicPr>"
+                    "<xdr:blipFill>"
+                    '<a:blip r:embed="rId1"/>'
+                    "<a:stretch><a:fillRect/></a:stretch>"
+                    "</xdr:blipFill>"
+                    "<xdr:spPr>"
+                    f'<a:xfrm><a:off x="0" y="0"/><a:ext cx="{cx_emu}" cy="{cy_emu}"/></a:xfrm>'
+                    '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>'
+                    "</xdr:spPr>"
+                    "</xdr:pic>"
+                    "<xdr:clientData/>"
+                    "</xdr:oneCellAnchor>"
+                    "</xdr:wsDr>"
+                )
+                zf.writestr("xl/worksheets/_rels/sheet1.xml.rels", sheet_rels_xml)
+                zf.writestr("xl/drawings/_rels/drawing1.xml.rels", drawing_rels_xml)
+                zf.writestr("xl/drawings/drawing1.xml", drawing_xml)
+
         return buf.getvalue()
 
     @classmethod
@@ -945,6 +1033,7 @@ class OutlookGraphService:
         *,
         intro_text: str,
         rows: list[dict[str, Any]],
+        logo_cid: str | None = None,
     ) -> str:
         """Build HTML body containing the intro text and the Helpdesk Excel table."""
         def esc(val: Any) -> str:
@@ -967,12 +1056,19 @@ class OutlookGraphService:
             if line.strip()
         )
 
+        logo_cell_content = (
+            f'<img src="cid:{logo_cid}" alt="HELPDESK · Soporte &amp; Planificación TI" '
+            'style="max-height:68px;max-width:260px;height:auto;width:auto;display:block;margin:0 auto;" />'
+            if logo_cid
+            else "LOGO HELPDESK"
+        )
+
         return (
             f"<div>{paragraphs}"
             '<table style="border-collapse:collapse;margin-top:12px;min-width:680px;font-family:Calibri,Arial,sans-serif;">'
             "<tr>"
-            '<td colspan="2" rowspan="3" style="border:1px solid #222;padding:18px 24px;text-align:center;font-weight:700;font-size:15px;background:#ffffff;">'
-            "LOGO HELPDESK"
+            '<td colspan="2" rowspan="3" style="border:1px solid #222;padding:8px 16px;text-align:center;vertical-align:middle;font-weight:700;font-size:15px;background:#ffffff;">'
+            f"{logo_cell_content}"
             "</td>"
             '<td colspan="3" style="border:none;"></td>'
             "</tr>"
@@ -1013,8 +1109,11 @@ class OutlookGraphService:
         if not rows:
             raise OutlookGraphError("No hay solicitudes en la tabla para enviar.", status_code=400)
 
+        logo_path = self._resolve_logo_path()
+        logo_cid = "logo_helpdesk_umbral" if logo_path else None
+
         xlsx_bytes = self.build_planning_excel_bytes(rows)
-        html_body = self.build_planning_email_html(intro_text=intro_text, rows=rows)
+        html_body = self.build_planning_email_html(intro_text=intro_text, rows=rows, logo_cid=logo_cid)
 
         safe_filename = re.sub(r"[^A-Za-z0-9_.-]", "_", filename or "Planificacion_Helpdesk.xlsx")
         if not safe_filename.endswith(".xlsx"):
@@ -1042,6 +1141,15 @@ class OutlookGraphService:
                     if clean_cc:
                         mail.CC = "; ".join(clean_cc)
                 mail.Subject = subject.strip() or "Planificación Semanal de Solicitudes - Helpdesk"
+                if logo_path and logo_cid:
+                    logo_att = mail.Attachments.Add(logo_path)
+                    try:
+                        logo_att.PropertyAccessor.SetProperty(
+                            "http://schemas.microsoft.com/mapi/proptag/0x3712001F",
+                            logo_cid,
+                        )
+                    except Exception:
+                        pass
                 mail.HTMLBody = html_body
                 mail.Attachments.Add(temp_path)
 

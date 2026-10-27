@@ -774,8 +774,19 @@
   font-size: 15px;
   color: #1f1f1f;
   background: #ffffff;
-  height: 68px;
+  height: 76px;
+  padding: 4px 10px;
   letter-spacing: 0.3px;
+}
+
+.excel-logo-img {
+  display: block;
+  margin: 0 auto;
+  max-height: 68px;
+  max-width: 280px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 .excel-empty-cell {

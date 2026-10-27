@@ -66,7 +66,7 @@ def sync_outlook_messages(
     request: Request,
     service: OutlookServiceDependency,
     access_token: Annotated[str, Depends(require_graph_access_token)],
-    limit: int = Query(default=25, ge=1, le=5000),
+    limit: int = Query(default=100000, ge=1),
     folder: str | None = Query(default=None),
 ) -> dict[str, Any]:
     try:
@@ -96,7 +96,7 @@ def list_messages(
     folder: str | None = Query(default=None, alias="folder"),
     remitente: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=500, ge=1, le=10000),
+    page_size: int = Query(default=100000, ge=1),
 ) -> dict[str, Any]:
     del access_token
     return service.list_messages(

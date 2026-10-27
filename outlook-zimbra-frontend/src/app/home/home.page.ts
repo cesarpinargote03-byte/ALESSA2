@@ -420,7 +420,7 @@ export class HomePage implements OnInit {
     try {
       const syncResult = await firstValueFrom(
         this.http.post<{ count: number; messages: MailItem[] }>(
-          `${this.apiUrl}/outlook/sync?limit=2000`,
+          `${this.apiUrl}/outlook/sync?limit=100000`,
           {},
           { withCredentials: true },
         ),
@@ -859,7 +859,7 @@ export class HomePage implements OnInit {
     this.loading = true;
     try {
       const result = await firstValueFrom(
-        this.http.get<{ items: MailItem[] }>(`${this.apiUrl}/correos?page_size=10000`, {
+        this.http.get<{ items: MailItem[] }>(`${this.apiUrl}/correos?page_size=1000000`, {
           withCredentials: true,
         }),
       );
